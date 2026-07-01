@@ -14,6 +14,7 @@ A full-stack economic intelligence platform for tracking macroeconomic indicator
 - [Deployment Options](#deployment-options)
 - [Configuration](#configuration)
 - [API Reference](#api-reference)
+- [Roles and Access Control](#roles-and-access-control)
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
 
@@ -474,6 +475,52 @@ Protected user management APIs use HTTP Basic Authentication in Swagger. Click *
 The update API only accepts `full_name` and `password`. It does not update username, email, created date, or active status. The modification date is stored in `updated_at`.
 
 The delete API is a soft delete. It does not remove the user row from PostgreSQL. It sets `is_active` to `false` and updates `updated_at` so the record stays available for future reference.
+
+---
+
+## Roles and Access Control
+
+The project should use roles to define what a user is allowed to do after their username and password are verified.
+
+Recommended roles:
+
+| Role | Purpose |
+|------|---------|
+| `admin` | Full access to user management, role management, and protected APIs |
+| `analyst` | Access to dashboard and economic data features |
+| `inactive` | No active access; used for users who are deactivated but kept for future reference |
+
+Protected role and user-management APIs should use HTTP Basic Authentication in Swagger. Click **Authorize** and enter:
+
+| Username | Password |
+|----------|----------|
+| `msadmin` | `all4one` |
+
+Swagger sends the credentials as a Basic Auth header:
+
+```http
+Authorization: Basic ...
+```
+
+No JWT token, Bearer token, or `access_token` is required.
+
+Basic Authentication confirms that the username and password are valid. Role checks should then decide whether the authenticated user is allowed to perform the action. For example, creating roles should be limited to users with the `admin` role.
+
+Suggested role APIs:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/roles` | Create a role |
+| GET | `/api/v1/roles` | List roles |
+
+When roles are added, each user should store a `role_id`. A normal active user can have the `admin` or `analyst` role. A deactivated user should have:
+
+```text
+is_active = false
+role = inactive
+```
+
+This keeps deleted users in PostgreSQL for future reference while preventing them from accessing protected APIs.
 
 ## Troubleshooting
 

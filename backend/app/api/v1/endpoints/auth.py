@@ -10,6 +10,8 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.auth import UserLogin, UserCreate, UserUpdate, UserResponse
+from app.models.role import Role
+from msfintech.backend.app.schemas import role
 
 security = HTTPBasic()
 router = APIRouter()
@@ -81,13 +83,17 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
+    role = db.query(Role).filter(Role.id == user_data.role_id).first()
+    if not role:
+        raise HTTPException(status_code=404, detail="Role not found")
     
     # Create new user (plain text password - encryption to be added later)
     db_user = User(
         username=user_data.username,
         email=user_data.email,
         full_name=user_data.full_name,
-        hashed_password=user_data.password
+        hashed_password=user_data.password,
+        role_id=user_data.role_id,
     )
     
     db.add(db_user)
@@ -133,8 +139,13 @@ def delete_user(
 
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    inactive_role = db.query(Role).filter(Role.name == "inactive").first()
+    if not inactive_role:
+        raise HTTPException(status_code=404, detail="Inactive role not found")
 
     db_user.is_active = False
+    db_user.role_id = inactive_role.id 
     db_user.updated_at = datetime.utcnow()
 
     db.commit()
