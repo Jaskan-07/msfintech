@@ -99,25 +99,6 @@
     </insert>
 </changeSet>
 
-<changeSet id="004-seed-roles" author="economic-dashboard">
-    <comment>Seed default roles</comment>
-
-    <insert tableName="roles">
-        <column name="name" value="admin"/>
-        <column name="description" value="Full access to users and APIs"/>
-    </insert>
-
-    <insert tableName="roles">
-        <column name="name" value="analyst"/>
-        <column name="description" value="Can view and work with dashboard data"/>
-    </insert>
-
-    <insert tableName="roles">
-        <column name="name" value="inactive"/>
-        <column name="description" value="No active access"/>
-    </insert>
-</changeSet>
-
 <changeSet id="005-add-role-id-to-users" author="economic-dashboard">
     <comment>Add role_id to users table</comment>
 
