@@ -1,7 +1,8 @@
 """
 User Model
 """
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
 from datetime import datetime
 
 from app.db.base import Base
@@ -17,5 +18,7 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     full_name = Column(String(100))
     is_active = Column(Boolean, default=True)
+    role_id = Column(Integer, ForeignKey("roles.id"), nullable=False)
+    role = relationship("Role")
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

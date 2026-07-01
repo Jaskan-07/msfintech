@@ -13,6 +13,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    role_id: int
 
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
@@ -26,6 +27,7 @@ class UserLogin(BaseModel):
 
 class UserResponse(UserBase):
     id: int
+    role_id: int
     is_active: bool
     created_at: datetime
     updated_at: datetime
