@@ -452,7 +452,15 @@ curl -X POST http://localhost:8000/api/v1/auth/login \
 }
 ```
 
----
+### User Management
+
+| Method | Endpoint | Description |
+|----------|----------|-------------|
+| POST | /api/v1/users | Create user |
+| GET | /api/v1/users | List all users |
+| GET | /api/v1/users/{id} | Get user by ID |
+| PUT | /api/v1/users/{id} | Update user |
+| DELETE | /api/v1/users/{id} | Delete user |
 
 ## Troubleshooting
 

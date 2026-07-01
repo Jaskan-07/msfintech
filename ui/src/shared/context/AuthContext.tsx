@@ -3,31 +3,31 @@ import { authService } from '../services/authService'
 
 interface AuthContextType {
   isAuthenticated: boolean
-  token: string | null
-  login: (token: string) => void
+  session: string | null
+  login: (user: any) => void
   logout: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(authService.getToken())
+  const [session, setSession] = useState<string | null>(authService.getSession())
 
-  const login = (newToken: string) => {
-    authService.setToken(newToken)
-    setToken(newToken)
+  const login = (user: any) => {
+    authService.setSession(user)
+    setSession(JSON.stringify(user))
   }
 
   const logout = () => {
-    authService.removeToken()
-    setToken(null)
+    authService.removeSession()
+    setSession(null)
   }
 
   return (
     <AuthContext.Provider
       value={{
-        isAuthenticated: !!token,
-        token,
+        isAuthenticated: !!session,
+        session,
         login,
         logout
       }}

@@ -1,13 +1,18 @@
 import axios from 'axios'
 import { API_BASE_URL } from '../../config/api'
 
-interface LoginResponse {
-  access_token: string
-  token_type: string
+interface UserResponse {
+  id: number
+  username: string
+  email: string
+  full_name?: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
 }
 
 export const authService = {
-  async login(username: string, password: string): Promise<LoginResponse> {
+  async login(username: string, password: string): Promise<UserResponse> {
     const response = await axios.post(`${API_BASE_URL}/auth/login`, {
       username,
       password
@@ -30,19 +35,19 @@ export const authService = {
     return response.data
   },
 
-  getToken(): string | null {
-    return localStorage.getItem('token')
+  getSession(): string | null {
+    return localStorage.getItem('auth_user')
   },
 
-  setToken(token: string): void {
-    localStorage.setItem('token', token)
+  setSession(user: UserResponse): void {
+    localStorage.setItem('auth_user', JSON.stringify(user))
   },
 
-  removeToken(): void {
-    localStorage.removeItem('token')
+  removeSession(): void {
+    localStorage.removeItem('auth_user')
   },
 
   isAuthenticated(): boolean {
-    return !!this.getToken()
+    return !!this.getSession()
   }
 }
