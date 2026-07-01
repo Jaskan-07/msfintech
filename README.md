@@ -24,7 +24,7 @@ A full-stack economic intelligence platform for tracking macroeconomic indicator
 
 | Feature | Description |
 |---------|-------------|
-| User Authentication | Secure JWT-based login |
+| User Authentication | Username/password login with HTTP Basic Auth for protected Swagger APIs |
 | Economic Indicators | GDP, CPI, PCI, Unemployment rates |
 | Financial Markets | Bond yields, Stock indices, Commodities |
 | Real-time Data | Live API integrations |
@@ -199,7 +199,7 @@ podman pod create --name economic-pod -p 8000:8000 -p 8081:8081 -p 5432:5432
 # Start PostgreSQL
 podman run -d --pod economic-pod --name economic-db \
   -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=all4one \
+  -e POSTGRES_PASSWORD=postgres \
   -e POSTGRES_DB=economic_indicators \
   postgres:16-alpine
 
@@ -211,14 +211,14 @@ podman run --rm --pod economic-pod \
   -v ./backend/migration:/liquibase/changelog:Z \
   liquibase/liquibase:4.25-alpine \
   --url=jdbc:postgresql://localhost:5432/economic_indicators \
-  --username=postgres --password=all4one \
+  --username=postgres --password=postgres \
   --changeLogFile=changelog/db.changelog-master.xml update
 
 # Start backend
 podman run -d --pod economic-pod --name economic-backend \
-  -e POSTGRES_SERVER=localhost -e POSTGRES_PORT=5432 \
-  -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=all4one \
-  -e POSTGRES_DB=economic_indicators \
+  -e MSFINTECH_POSTGRES_SERVER=localhost -e MSFINTECH_POSTGRES_PORT=5432 \
+  -e MSFINTECH_POSTGRES_USER=postgres -e MSFINTECH_POSTGRES_PASSWORD=postgres \
+  -e MSFINTECH_POSTGRES_DB=economic_indicators \
   economic-indicators-api
 
 # Start UI
@@ -253,7 +253,7 @@ docker run --rm --network host \
   -v "$(pwd)/migration:/liquibase/changelog" \
   liquibase/liquibase:4.25-alpine \
   --url=jdbc:postgresql://localhost:5432/economic_indicators \
-  --username=postgres --password=all4one \
+  --username=postgres --password=postgres \
   --changeLogFile=changelog/db.changelog-master.xml update
 ```
 
@@ -268,7 +268,7 @@ podman run --rm \
   -v "c:\path\to\backend\migration:/liquibase/changelog:Z" \
   liquibase/liquibase:4.25-alpine \
   --url=jdbc:postgresql://172.31.224.1:5432/economic_indicators \
-  --username=postgres --password=all4one \
+  --username=postgres --password=postgres \
   --changeLogFile=changelog/db.changelog-master.xml update
 ```
 
@@ -283,11 +283,11 @@ podman run --rm \
 **Windows PowerShell:**
 ```powershell
 cd backend
-$env:POSTGRES_SERVER="localhost"
-$env:POSTGRES_PORT="5432"
-$env:POSTGRES_USER="postgres"
-$env:POSTGRES_PASSWORD="all4one"
-$env:POSTGRES_DB="economic_indicators"
+$env:MSFINTECH_POSTGRES_SERVER="127.0.0.1"
+$env:MSFINTECH_POSTGRES_PORT="5432"
+$env:MSFINTECH_POSTGRES_USER="postgres"
+$env:MSFINTECH_POSTGRES_PASSWORD="postgres"
+$env:MSFINTECH_POSTGRES_DB="economic_indicators"
 $env:PYTHONPATH=(Get-Location).Path
 
 pip install -r requirements.txt
@@ -297,11 +297,11 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 **Linux/macOS:**
 ```bash
 cd backend
-export POSTGRES_SERVER=localhost
-export POSTGRES_PORT=5432
-export POSTGRES_USER=postgres
-export POSTGRES_PASSWORD=all4one
-export POSTGRES_DB=economic_indicators
+export MSFINTECH_POSTGRES_SERVER=127.0.0.1
+export MSFINTECH_POSTGRES_PORT=5432
+export MSFINTECH_POSTGRES_USER=postgres
+export MSFINTECH_POSTGRES_PASSWORD=postgres
+export MSFINTECH_POSTGRES_DB=economic_indicators
 export PYTHONPATH=$(pwd)
 
 pip install -r requirements.txt
@@ -403,13 +403,13 @@ az containerapp create \
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `POSTGRES_SERVER` | Database host | `localhost` |
-| `POSTGRES_PORT` | Database port | `5432` |
-| `POSTGRES_USER` | Database user | `postgres` |
-| `POSTGRES_PASSWORD` | Database password | `all4one` |
-| `POSTGRES_DB` | Database name | `economic_indicators` |
-| `SECRET_KEY` | JWT signing key | (change in production) |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Token TTL | `30` |
+| `MSFINTECH_POSTGRES_SERVER` | Database host | `127.0.0.1` |
+| `MSFINTECH_POSTGRES_PORT` | Database port | `5432` |
+| `MSFINTECH_POSTGRES_USER` | Database user | `postgres` |
+| `MSFINTECH_POSTGRES_PASSWORD` | Database password | `postgres` |
+| `MSFINTECH_POSTGRES_DB` | Database name | `economic_indicators` |
+
+The database password is different from the app login password. PostgreSQL uses `postgres`; the seeded app user uses `all4one`.
 
 ### Frontend Environment Variables
 
@@ -447,20 +447,32 @@ curl -X POST http://localhost:8000/api/v1/auth/login \
 **Response:**
 ```json
 {
-  "access_token": "eyJhbGciOiJIUzI1NiIs...",
-  "token_type": "bearer"
+  "id": 1,
+  "username": "msadmin",
+  "email": "msadmin@economic-dashboard.com",
+  "full_name": "MS Admin",
+  "is_active": true,
+  "created_at": "2026-06-26T00:00:00",
+  "updated_at": "2026-06-26T00:00:00"
 }
 ```
 
 ### User Management
 
 | Method | Endpoint | Description |
-|----------|----------|-------------|
-| POST | /api/v1/users | Create user |
-| GET | /api/v1/users | List all users |
-| GET | /api/v1/users/{id} | Get user by ID |
-| PUT | /api/v1/users/{id} | Update user |
-| DELETE | /api/v1/users/{id} | Delete user |
+|--------|----------|-------------|
+| PUT | `/api/v1/auth/users/{user_id}` | Update user full name and password |
+| DELETE | `/api/v1/auth/users/{user_id}` | Deactivate user by setting `is_active` to false |
+
+Protected user management APIs use HTTP Basic Authentication in Swagger. Click **Authorize** and enter the app credentials:
+
+| Username | Password |
+|----------|----------|
+| `msadmin` | `all4one` |
+
+The update API only accepts `full_name` and `password`. It does not update username, email, created date, or active status. The modification date is stored in `updated_at`.
+
+The delete API is a soft delete. It does not remove the user row from PostgreSQL. It sets `is_active` to `false` and updates `updated_at` so the record stays available for future reference.
 
 ## Troubleshooting
 
