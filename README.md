@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Economic Indicators Dashboard
 
 A full-stack economic intelligence platform for tracking macroeconomic indicators and financial market data.
