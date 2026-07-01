@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Economic Indicators Dashboard
 
 A full-stack economic intelligence platform for tracking macroeconomic indicators and financial market data.
@@ -554,3 +555,6 @@ MIT License
 ## Support
 
 For issues and questions, please open a GitHub issue.
+=======
+# msfintech
+>>>>>>> 4005e2e44a90bfeeb340117b7678b2ccb1ede9f1
