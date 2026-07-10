@@ -11,7 +11,6 @@ from app.db.session import get_db
 from app.models.user import User
 from app.schemas.auth import UserLogin, UserCreate, UserUpdate, UserResponse
 from app.models.role import Role
-from msfintech.backend.app.schemas import role
 
 security = HTTPBasic()
 router = APIRouter()

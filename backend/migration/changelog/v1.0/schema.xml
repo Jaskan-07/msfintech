@@ -6,12 +6,36 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
     <!-- ================================================================== -->
+    <!-- ROLES TABLE                                                        -->
+    <!-- ================================================================== -->
+    <changeSet id="001-ms_roles" author="economic-dashboard">
+        <comment>Create ms_roles table</comment>
+
+        <createTable tableName="ms_roles">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="description" type="VARCHAR(255)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <rollback>
+            <dropTable tableName="ms_roles"/>
+        </rollback>
+    </changeSet>
+
+    <!-- ================================================================== -->
     <!-- USERS TABLE                                                        -->
     <!-- ================================================================== -->
-    <changeSet id="001-users" author="economic-dashboard">
-        <comment>Create users table for authentication</comment>
+    <changeSet id="002-ms_users" author="economic-dashboard">
+        <comment>Create ms_users table for authentication</comment>
         
-        <createTable tableName="users">
+        <createTable tableName="ms_users">
             <column name="id" type="SERIAL">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -34,99 +58,105 @@
             </column>
         </createTable>
         
-        <createIndex tableName="users" indexName="idx_users_username">
+        <createIndex tableName="ms_users" indexName="idx_ms_users_username">
             <column name="username"/>
         </createIndex>
         
-        <createIndex tableName="users" indexName="idx_users_email">
+        <createIndex tableName="ms_users" indexName="idx_ms_users_email">
             <column name="email"/>
         </createIndex>
         
         <rollback>
-            <dropTable tableName="users"/>
+            <dropTable tableName="ms_users"/>
         </rollback>
     </changeSet>
 
-    <!-- ================================================================== -->
-    <!-- SEED DEFAULT ADMIN USER                                            -->
-    <!-- ================================================================== -->
-    <changeSet id="002-seed-admin" author="economic-dashboard">
-        <comment>Seed default admin user (msadmin/all4one)</comment>
-        <sqlFile path="postgres/seed-admin-user.sql" relativeToChangelogFile="true"/>
+    <changeSet id="003-add-role-id-to-ms_users" author="economic-dashboard">
+        <comment>Add role_id to ms_users table</comment>
+
+        <addColumn tableName="ms_users">
+            <column name="role_id" type="INT"/>
+        </addColumn>
+
+        <addForeignKeyConstraint
+            baseTableName="ms_users"
+            baseColumnNames="role_id"
+            referencedTableName="ms_roles"
+            referencedColumnNames="id"
+            constraintName="fk_ms_users_ms_roles"/>
+
         <rollback>
-            <delete tableName="users">
-                <where>username = 'msadmin'</where>
-            </delete>
+            <dropForeignKeyConstraint baseTableName="ms_users" constraintName="fk_ms_users_roles"/>
+            <dropColumn tableName="ms_users" columnName="role_id"/>
         </rollback>
     </changeSet>
-<changeSet id="003-roles" author="economic-dashboard">
-    <comment>Create roles table</comment>
 
-    <createTable tableName="roles">
-        <column name="id" type="SERIAL">
-            <constraints primaryKey="true" nullable="false"/>
-        </column>
-        <column name="name" type="VARCHAR(50)">
-            <constraints nullable="false" unique="true"/>
-        </column>
-        <column name="description" type="VARCHAR(255)"/>
-        <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
-            <constraints nullable="false"/>
-        </column>
-    </createTable>
+    <changeSet id="004-ms_permissions" author="economic-dashboard">
+        <comment>Create ms_permissions table for authorization</comment>
 
-    <rollback>
-        <dropTable tableName="roles"/>
-    </rollback>
-</changeSet>
+        <createTable tableName="ms_permissions">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+             <column name="name" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="description" type="VARCHAR(255)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
 
-<changeSet id="004-seed-roles" author="economic-dashboard">
-    <comment>Seed default roles</comment>
+        <rollback>
+            <dropTable tableName="ms_permissions"/>
+        </rollback>
+    </changeSet>
 
-    <insert tableName="roles">
-        <column name="name" value="admin"/>
-        <column name="description" value="Full access to users and APIs"/>
-    </insert>
+    <changeSet id="005-ms_role_permissions" author="economic-dashboard">
+        <comment>Create ms_role_permissions table for role-based permissions</comment>
 
-    <insert tableName="roles">
-        <column name="name" value="analyst"/>
-        <column name="description" value="Can view and work with dashboard data"/>
-    </insert>
+        <createTable tableName="ms_role_permissions">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>   
+            <column name="role_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="permission_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>   
+        </createTable>
 
-    <insert tableName="roles">
-        <column name="name" value="inactive"/>
-        <column name="description" value="No active access"/>
-    </insert>
-</changeSet>
+        <addForeignKeyConstraint
+            baseTableName="ms_role_permissions"
+            baseColumnNames="role_id"
+            referencedTableName="ms_roles"
+            referencedColumnNames="id"
+            constraintName="fk_ms_role_permissions_roles"/>
 
-<changeSet id="005-add-role-id-to-users" author="economic-dashboard">
-    <comment>Add role_id to users table</comment>
+        <addForeignKeyConstraint
+            baseTableName="ms_role_permissions"
+            baseColumnNames="permission_id"
+            referencedTableName="ms_permissions"
+            referencedColumnNames="id"
+            constraintName="fk_ms_role_permissions_permissions"/>
+        
+        <addUniqueConstraint 
+            tableName="ms_role_permissions" 
+            columnNames="role_id, permission_id" 
+            constraintName="uk_ms_role_permissions_role_permission"/>
 
-    <addColumn tableName="users">
-        <column name="role_id" type="INT"/>
-    </addColumn>
-
-    <addForeignKeyConstraint
-        baseTableName="users"
-        baseColumnNames="role_id"
-        referencedTableName="roles"
-        referencedColumnNames="id"
-        constraintName="fk_users_roles"/>
-
-    <rollback>
-        <dropForeignKeyConstraint baseTableName="users" constraintName="fk_users_roles"/>
-        <dropColumn tableName="users" columnName="role_id"/>
-    </rollback>
-</changeSet>
-
-<changeSet id="006-assign-admin-role" author="economic-dashboard">
-    <comment>Assign admin role to default admin user</comment>
-
-    <sql>
-        UPDATE users
-        SET role_id = (SELECT id FROM roles WHERE name = 'admin')
-        WHERE username = 'msadmin';
-    </sql>
-</changeSet>
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="ms_role_permissions" constraintName="fk_ms_role_permissions_roles"/>
+            <dropForeignKeyConstraint baseTableName="ms_role_permissions" constraintName="fk_ms_role_permissions_permissions"/>
+            <dropTable tableName="ms_role_permissions"/>
+        </rollback>
+    </changeSet>
 
 </databaseChangeLog>

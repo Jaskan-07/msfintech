@@ -4,8 +4,8 @@
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM users WHERE username = 'msadmin') THEN
-        INSERT INTO users (username, email, hashed_password, full_name, is_active)
+    IF NOT EXISTS (SELECT 1 FROM ms_users WHERE username = 'msadmin') THEN
+        INSERT INTO ms_users (username, email, hashed_password, full_name, is_active)
         VALUES (
             'msadmin',
             'msadmin@economic-dashboard.com',
