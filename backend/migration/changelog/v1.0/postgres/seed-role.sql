@@ -14,4 +14,3 @@ BEGIN
         (inactive_role_name, 'No active access');
 END $$;
 
---rollback DELETE FROM ms_role WHERE name IN ('admin', 'analyst', 'inactive');

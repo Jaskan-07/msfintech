@@ -14,4 +14,3 @@ BEGIN
         (manage_users_permission, 'Permission to manage users');
 END $$;
 
---rollback DELETE FROM ms_permission WHERE name IN ('view_dashboard', 'edit_dashboard', 'manage_users');

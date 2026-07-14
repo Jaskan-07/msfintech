@@ -17,7 +17,6 @@ BEGIN
     SELECT id INTO analyst_role_id
     FROM ms_role
     WHERE name = 'analyst';
-
     SELECT id INTO view_dashboard_permission_id
     FROM ms_permission
     WHERE name = 'view_dashboard';
@@ -38,4 +37,3 @@ BEGIN
         (analyst_role_id, view_dashboard_permission_id);
 END $$;
 
---rollback DELETE FROM ms_role_permission WHERE role_id IN (SELECT id FROM ms_role WHERE name IN ('admin', 'analyst')) AND permission_id IN (SELECT id FROM ms_permission WHERE name IN ('view_dashboard', 'edit_dashboard', 'manage_users'));

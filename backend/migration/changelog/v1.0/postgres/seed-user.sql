@@ -24,5 +24,3 @@ BEGIN
         admin_role_id
     );
 END $$;
-
---rollback DELETE FROM ms_user WHERE username = 'msadmin';

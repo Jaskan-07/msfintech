@@ -11,6 +11,11 @@ class RoleCreate(BaseModel):
     description: Optional[str] = None
 
 
+class RoleUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+
 class RoleResponse(RoleCreate):
     id: int
     created_at: datetime
