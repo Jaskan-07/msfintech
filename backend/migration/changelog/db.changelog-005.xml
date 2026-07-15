@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="add-user-role-column" author="msfintech">
+        <comment>Replace is_admin/is_active flags with a single role column for RBAC</comment>
+        <addColumn tableName="users">
+            <column name="role" type="VARCHAR(20)" defaultValue="analyst">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <sql>
+            UPDATE users SET role = 'admin' WHERE is_admin = true;
+            UPDATE users SET role = 'inactive' WHERE is_active = false;
+        </sql>
+        <dropColumn tableName="users" columnName="is_admin"/>
+        <dropColumn tableName="users" columnName="is_active"/>
+    </changeSet>
+
+</databaseChangeLog>

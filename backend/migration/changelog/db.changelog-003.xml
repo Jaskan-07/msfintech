@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="fix-msadmin-seed-password" author="msfintech">
+        <comment>Repair the default admin password when the old seed hash does not match all4one</comment>
+        <update tableName="users">
+            <column name="hashed_password" value="all4one"/>
+            <where>username = 'msadmin' AND hashed_password = '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36XUOxM1A83/JzZ.W/g7D0S'</where>
+        </update>
+        <rollback>
+            <update tableName="users">
+                <column name="hashed_password" value="$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36XUOxM1A83/JzZ.W/g7D0S"/>
+                <where>username = 'msadmin' AND hashed_password = 'all4one'</where>
+            </update>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

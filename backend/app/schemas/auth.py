@@ -15,6 +15,10 @@ class UserCreate(UserBase):
     password: str
     role_id: int
 
+
+class AdminUserCreate(UserCreate):
+    pass
+
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     password: Optional[str] = None
@@ -34,3 +38,6 @@ class UserResponse(UserBase):
     
     class Config:
         from_attributes = True
+
+
+UserOut = UserResponse
