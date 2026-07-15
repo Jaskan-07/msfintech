@@ -6,6 +6,7 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
 
+<<<<<<< HEAD
     <changeSet id="001-create-roles-table" author="economic-dashboard">
         <createTable tableName="ms_roles">
             <column name="role_id" type="SERIAL">
@@ -88,6 +89,39 @@
     <changeSet id="004-users" author="economic-dashboard">
         <comment>Create users table for authentication</comment>
         <createTable tableName="users">
+=======
+    <!-- ================================================================== -->
+    <!-- ROLES TABLE                                                        -->
+    <!-- ================================================================== -->
+    <changeSet id="001-ms_role" author="economic-dashboard">
+        <comment>Create ms_role table</comment>
+
+        <createTable tableName="ms_role">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="description" type="VARCHAR(255)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <rollback>
+            <dropTable tableName="ms_role"/>
+        </rollback>
+    </changeSet>
+
+    <!-- ================================================================== -->
+    <!-- USERS TABLE                                                        -->
+    <!-- ================================================================== -->
+    <changeSet id="002-ms_user" author="economic-dashboard">
+        <comment>Create ms_user table for authentication</comment>
+        
+        <createTable tableName="ms_user">
+>>>>>>> other-repo/main
             <column name="id" type="SERIAL">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -102,7 +136,13 @@
             </column>
             <column name="full_name" type="VARCHAR(100)"/>
             <column name="is_active" type="BOOLEAN" defaultValueBoolean="true"/>
+<<<<<<< HEAD
             <column name="role_id" type="INT"/>
+=======
+            <column name="role_id" type="INT">
+                <constraints nullable="false" foreignKeyName="fk_ms_user_ms_role" references="ms_role(id)"/>
+            </column>
+>>>>>>> other-repo/main
             <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
@@ -110,6 +150,7 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
+<<<<<<< HEAD
 
         <addForeignKeyConstraint baseTableName="users"
                                  baseColumnNames="role_id"
@@ -122,12 +163,21 @@
             <column name="username"/>
         </createIndex>
         <createIndex tableName="users" indexName="idx_users_email">
+=======
+        
+        <createIndex tableName="ms_user" indexName="idx_ms_user_username">
+            <column name="username"/>
+        </createIndex>
+        
+        <createIndex tableName="ms_user" indexName="idx_ms_user_email">
+>>>>>>> other-repo/main
             <column name="email"/>
         </createIndex>
         <rollback>
-            <dropTable tableName="users"/>
+            <dropTable tableName="ms_user"/>
         </rollback>
     </changeSet>
+<<<<<<< HEAD
     <changeSet id="005-seed-roles" author="economic-dashboard">
         <comment>Seed system roles</comment>
         <sqlFile path="v1.0/postgres/seed-roles.sql"
@@ -137,6 +187,74 @@
             <delete tableName="ms_roles">
                 <where>role_id IN (1, 2, 3)</where>
             </delete>
+=======
+
+    <changeSet id="003-ms_permission" author="economic-dashboard">
+        <comment>Create ms_permission table for authorization</comment>
+
+        <createTable tableName="ms_permission">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+             <column name="name" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="description" type="VARCHAR(255)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <rollback>
+            <dropTable tableName="ms_permission"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="004-ms_role_permission" author="economic-dashboard">
+        <comment>Create ms_role_permission table for role-based permissions</comment>
+
+        <createTable tableName="ms_role_permission">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>   
+            <column name="role_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="permission_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>   
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="ms_role_permission"
+            baseColumnNames="role_id"
+            referencedTableName="ms_role"
+            referencedColumnNames="id"
+            constraintName="fk_ms_role_permission_role"/>
+
+        <addForeignKeyConstraint
+            baseTableName="ms_role_permission"
+            baseColumnNames="permission_id"
+            referencedTableName="ms_permission"
+            referencedColumnNames="id"
+            constraintName="fk_ms_role_permission_permission"/>
+        
+        <addUniqueConstraint 
+            tableName="ms_role_permission" 
+            columnNames="role_id, permission_id" 
+            constraintName="uk_ms_role_permission_role_permission"/>
+
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="ms_role_permission" constraintName="fk_ms_role_permission_role"/>
+            <dropForeignKeyConstraint baseTableName="ms_role_permission" constraintName="fk_ms_role_permission_permission"/>
+            <dropTable tableName="ms_role_permission"/>
+>>>>>>> other-repo/main
         </rollback>
     </changeSet>
 

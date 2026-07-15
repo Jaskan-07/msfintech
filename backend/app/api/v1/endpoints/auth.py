@@ -1,10 +1,10 @@
 """
 Authentication Endpoint
 """
-from datetime import timedelta
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -12,8 +12,10 @@ from app.core.security import create_access_token
 from app.db.session import get_db
 from app.models.rbac import Role
 from app.models.user import User
-from app.schemas.auth import Token, UserLogin, UserCreate, UserResponse
+from app.schemas.auth import UserLogin, UserCreate, UserUpdate, UserResponse
+from app.models.role import Role
 
+security = HTTPBasic()
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
 
@@ -43,44 +45,50 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     return user
 
 
-@router.post("/login", response_model=Token)
-def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
-    """
-    Login endpoint - authenticates user and returns JWT token
-    """
-    # Fetch user from database
-    user = db.query(User).filter(User.username == user_credentials.username).first()
-    
-    if not user:
+def verify_basic_auth(
+    credentials: HTTPBasicCredentials = Depends(security),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.username == credentials.username).first()
+
+    if not user or credentials.password != user.hashed_password:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password",
-            headers={"WWW-Authenticate": "Bearer"},
+            headers={"WWW-Authenticate": "Basic"},
         )
-    
-    # Verify password (plain text comparison - encryption to be added later)
-    if user_credentials.password != user.hashed_password:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    # Check if user is active
+
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User account is disabled",
+            headers={"WWW-Authenticate": "Basic"},
         )
-    
-    # Create access token
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.username},
-        expires_delta=access_token_expires
-    )
-    
-    return {"access_token": access_token, "token_type": "bearer"}
+
+    return user
+
+
+@router.post("/login", response_model=UserResponse)
+def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
+    """
+    Login endpoint - authenticates user and returns user details
+    """
+    user = db.query(User).filter(User.username == user_credentials.username).first()
+
+    if not user or user_credentials.password != user.hashed_password:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User account is disabled",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    return user
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -103,6 +111,9 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
+    role = db.query(Role).filter(Role.id == user_data.role_id).first()
+    if not role:
+        raise HTTPException(status_code=404, detail="Role not found")
     
     viewer_role = db.query(Role).filter(Role.role_name == "Viewer").first()
 
@@ -112,13 +123,64 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
         email=user_data.email,
         full_name=user_data.full_name,
         hashed_password=user_data.password,
-        role_id=viewer_role.role_id if viewer_role else None
+        role_id=user_data.role_id,
     )
     
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     
+    return db_user
+
+
+@router.put("/users/{user_id}", response_model=UserResponse)
+def update_user(
+    user_id: int,
+    user_data: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(verify_basic_auth)
+):
+    db_user = db.query(User).filter(User.id == user_id).first()
+
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user_data.full_name is not None:
+        db_user.full_name = user_data.full_name
+
+    if user_data.password is not None:
+        db_user.hashed_password = user_data.password
+
+    db_user.updated_at = datetime.utcnow()
+
+    db.commit()
+    db.refresh(db_user)
+
+    return db_user
+
+
+@router.delete("/users/{user_id}", response_model=UserResponse)
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(verify_basic_auth)
+):
+    db_user = db.query(User).filter(User.id == user_id).first()
+
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    inactive_role = db.query(Role).filter(Role.name == "inactive").first()
+    if not inactive_role:
+        raise HTTPException(status_code=404, detail="Inactive role not found")
+
+    db_user.is_active = False
+    db_user.role_id = inactive_role.id 
+    db_user.updated_at = datetime.utcnow()
+
+    db.commit()
+    db.refresh(db_user)
+
     return db_user
 
 

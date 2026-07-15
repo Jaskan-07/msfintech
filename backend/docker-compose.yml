@@ -10,7 +10,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5433:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -50,11 +50,11 @@ services:
       liquibase:
         condition: service_completed_successfully
     environment:
-      POSTGRES_SERVER: db
-      POSTGRES_PORT: 5432
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: economic_indicators
+      MSFINTECH_POSTGRES_SERVER: db
+      MSFINTECH_POSTGRES_PORT: 5432
+      MSFINTECH_POSTGRES_USER: postgres
+      MSFINTECH_POSTGRES_PASSWORD: postgres
+      MSFINTECH_POSTGRES_DB: economic_indicators
     ports:
       - "8000:8000"
     networks:

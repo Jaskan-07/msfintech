@@ -19,7 +19,7 @@ function Login() {
 
     try {
       const response = await authService.login(username, password)
-      login(response.access_token)
+      login(response)
       navigate('/dashboard')
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Login failed. Please try again.')

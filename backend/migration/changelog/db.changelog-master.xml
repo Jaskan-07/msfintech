@@ -5,7 +5,13 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
 
-    <include file="v1.0/schema.xml" relativeToChangelogFile="true"/>
+    <!-- DDL schema changes -->
+    <include file="changelog/v1.0/schema.xml" relativeToChangelogFile="true"/>
 
-    
+    <!-- Seed and data migration changes -->
+    <include file="changelog/v1.0/postgres/seed-role.sql" relativeToChangelogFile="true"/>
+    <include file="changelog/v1.0/postgres/seed-user.sql" relativeToChangelogFile="true"/>
+    <include file="changelog/v1.0/postgres/seed-permission.sql" relativeToChangelogFile="true"/>
+    <include file="changelog/v1.0/postgres/seed-role-permission.sql" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
