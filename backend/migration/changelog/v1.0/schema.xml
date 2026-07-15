@@ -2,15 +2,91 @@
 <databaseChangeLog
     xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    logicalFilePath="changelog/v1.0/schema.xml"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+                        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
 
-    <!-- ================================================================== -->
-    <!-- USERS TABLE                                                        -->
-    <!-- ================================================================== -->
-    <changeSet id="001-users" author="economic-dashboard">
+    <changeSet id="001-create-roles-table" author="economic-dashboard">
+        <createTable tableName="ms_roles">
+            <column name="role_id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="role_name" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modified_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modified_by" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <rollback>
+            <dropTable tableName="ms_roles"/>
+        </rollback> 
+    </changeSet>
+
+    <changeSet id="002-create-permissions-table" author="economic-dashboard">
+        <createTable tableName="ms_permissions">
+            <column name="permission_id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="permission_name" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="permission_description" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modified_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modified_by" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <rollback>
+            <dropTable tableName="ms_permissions"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="003-role-permission-mapping" author="economic-dashboard">
+        <createTable tableName="ms_role_permissions">
+            <column name="role_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="permission_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="ms_role_permissions"
+                                 baseColumnNames="role_id"
+                                 referencedTableName="ms_roles"
+                                 referencedColumnNames="role_id"
+                                 constraintName="fk_role_permissions_role"/>
+
+        <addForeignKeyConstraint baseTableName="ms_role_permissions"
+                                 baseColumnNames="permission_id"
+                                 referencedTableName="ms_permissions"
+                                 referencedColumnNames="permission_id"
+                                 constraintName="fk_role_permissions_permission"/>
+
+        <createIndex tableName="ms_role_permissions" indexName="idx_role_perm_permission_id">
+            <column name="permission_id"/>
+        </createIndex>
+        <rollback>
+            <dropTable tableName="ms_role_permissions"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="004-users" author="economic-dashboard">
         <comment>Create users table for authentication</comment>
-        
         <createTable tableName="users">
             <column name="id" type="SERIAL">
                 <constraints primaryKey="true" nullable="false"/>
@@ -26,6 +102,7 @@
             </column>
             <column name="full_name" type="VARCHAR(100)"/>
             <column name="is_active" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="role_id" type="INT"/>
             <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
@@ -33,31 +110,69 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        
+
+        <addForeignKeyConstraint baseTableName="users"
+                                 baseColumnNames="role_id"
+                                 referencedTableName="ms_roles"
+                                 referencedColumnNames="role_id"
+                                 constraintName="fk_users_role"
+                                 onDelete="SET NULL"/>
+
         <createIndex tableName="users" indexName="idx_users_username">
             <column name="username"/>
         </createIndex>
-        
         <createIndex tableName="users" indexName="idx_users_email">
             <column name="email"/>
         </createIndex>
-        
         <rollback>
             <dropTable tableName="users"/>
         </rollback>
     </changeSet>
-
-    <!-- ================================================================== -->
-    <!-- SEED DEFAULT ADMIN USER                                            -->
-    <!-- ================================================================== -->
-    <changeSet id="002-seed-admin" author="economic-dashboard">
-        <comment>Seed default admin user (msadmin/all4one)</comment>
-        <sqlFile path="postgres/seed-admin-user.sql" relativeToChangelogFile="true"/>
+    <changeSet id="005-seed-roles" author="economic-dashboard">
+        <comment>Seed system roles</comment>
+        <sqlFile path="v1.0/postgres/seed-roles.sql"
+                 relativeToChangelogFile="true"
+                 stripComments="true"/>
         <rollback>
-            <delete tableName="users">
-                <where>username = 'msadmin'</where>
+            <delete tableName="ms_roles">
+                <where>role_id IN (1, 2, 3)</where>
             </delete>
         </rollback>
     </changeSet>
 
+    <changeSet id="006-seed-permissions" author="economic-dashboard">
+        <comment>Seed system permissions</comment>
+        <sqlFile path="v1.0/postgres/seed-permissions.sql"
+                 relativeToChangelogFile="true"
+                 stripComments="true"/>
+        <rollback>
+            <delete tableName="ms_permissions">
+                <where>permission_id IN (1, 2, 3)</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="007-seed-role-permissions" author="economic-dashboard">
+        <comment>Seed system role-permission mappings</comment>
+        <sqlFile path="v1.0/postgres/seed-role-permissions.sql"
+                 relativeToChangelogFile="true"
+                 stripComments="true"/>
+        <rollback>
+            <delete tableName="ms_role_permissions">
+                <where>(role_id, permission_id) IN ((1, 1), (2, 2), (3, 3))</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="008-seed-users" author="economic-dashboard">
+        <comment>Seed default users</comment>
+        <sqlFile path="v1.0/postgres/seed-user.sql"
+                 relativeToChangelogFile="true"
+                 stripComments="true"/>
+        <rollback>
+            <delete tableName="users">
+                <where>username IN ('msadmin', 'janalyst', 'rviewer')</where>
+            </delete>
+        </rollback>
+    </changeSet>
 </databaseChangeLog>

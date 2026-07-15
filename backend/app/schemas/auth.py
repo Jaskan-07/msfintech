@@ -5,6 +5,8 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
 
+from app.schemas.rbac import RoleResponse
+
 
 class Token(BaseModel):
     access_token: str
@@ -23,6 +25,16 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    role_id: Optional[int] = None
+
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    full_name: Optional[str] = None
+    password: Optional[str] = None
+    is_active: Optional[bool] = None
+    role_id: Optional[int] = None
 
 
 class UserLogin(BaseModel):
@@ -33,6 +45,8 @@ class UserLogin(BaseModel):
 class UserResponse(UserBase):
     id: int
     is_active: bool
+    role_id: Optional[int] = None
+    role: Optional[RoleResponse] = None
     created_at: datetime
     
     class Config:

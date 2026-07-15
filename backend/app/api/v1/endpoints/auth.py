@@ -3,15 +3,44 @@ Authentication Endpoint
 """
 from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
+from app.core.security import create_access_token
 from app.db.session import get_db
+from app.models.rbac import Role
 from app.models.user import User
 from app.schemas.auth import Token, UserLogin, UserCreate, UserResponse
-from app.core.security import create_access_token
-from app.core.config import settings
 
 router = APIRouter()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
+
+
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
+    """
+    Resolve the current active user from a bearer token.
+    """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        username = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+    except JWTError as exc:
+        raise credentials_exception from exc
+
+    user = db.query(User).filter(User.username == username).first()
+    if user is None:
+        raise credentials_exception
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User account is disabled")
+    return user
 
 
 @router.post("/login", response_model=Token)
@@ -75,12 +104,15 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
             detail="Email already registered"
         )
     
+    viewer_role = db.query(Role).filter(Role.role_name == "Viewer").first()
+
     # Create new user (plain text password - encryption to be added later)
     db_user = User(
         username=user_data.username,
         email=user_data.email,
         full_name=user_data.full_name,
-        hashed_password=user_data.password
+        hashed_password=user_data.password,
+        role_id=viewer_role.role_id if viewer_role else None
     )
     
     db.add(db_user)
@@ -91,11 +123,8 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/me", response_model=UserResponse)
-def get_current_user_info(username: str, db: Session = Depends(get_db)):
+def get_current_user_info(current_user: User = Depends(get_current_user)):
     """
-    Get current user info by username (for testing)
+    Get current authenticated user info.
     """
-    user = db.query(User).filter(User.username == username).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
+    return current_user

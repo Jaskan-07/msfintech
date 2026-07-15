@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Full Stack Docker Compose - Economic Indicators Dashboard
 # Run: docker compose up -d
 
@@ -32,12 +30,15 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - ./backend/migration:/liquibase/changelog
+      - ./backend/migration/changelog:/liquibase/changelog
+    environment:
+      - LIQUIBASE_DUPLICATE_FILE_MODE=WARN
+      - LIQUIBASE_VALIDATE_XML_CHANGELOG_FILES=false
     command: >
       --url=jdbc:postgresql://db:5432/economic_indicators
       --username=postgres
       --password=postgres
-      --changeLogFile=changelog/db.changelog-master.xml
+      --changeLogFile=db.changelog-master.xml
       update
     networks:
       - economic-network
