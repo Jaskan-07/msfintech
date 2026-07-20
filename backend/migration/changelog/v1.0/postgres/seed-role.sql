@@ -3,14 +3,32 @@
 --changeset economic-dashboard:004-seed-role splitStatements:false
 DO $$
 DECLARE
-    admin_role_name VARCHAR(50) := 'admin';
-    analyst_role_name VARCHAR(50) := 'analyst';
-    inactive_role_name VARCHAR(50) := 'inactive';
+    existing_role_id INT;
 BEGIN
-    INSERT INTO ms_role (name, description)
-    VALUES
-        (admin_role_name, 'Full access to ms_user and APIs'),
-        (analyst_role_name, 'Can view and work with dashboard data'),
-        (inactive_role_name, 'No active access');
-END $$;
+    SELECT id INTO existing_role_id
+    FROM ms_role
+    WHERE name = 'admin';
 
+    IF existing_role_id IS NULL THEN
+        INSERT INTO ms_role (name, description)
+        VALUES ('admin', 'Full access to ms_user and APIs');
+    END IF;
+
+    SELECT id INTO existing_role_id
+    FROM ms_role
+    WHERE name = 'analyst';
+
+    IF existing_role_id IS NULL THEN
+        INSERT INTO ms_role (name, description)
+        VALUES ('analyst', 'Can view and work with dashboard data');
+    END IF;
+
+    SELECT id INTO existing_role_id
+    FROM ms_role
+    WHERE name = 'inactive';
+
+    IF existing_role_id IS NULL THEN
+        INSERT INTO ms_role (name, description)
+        VALUES ('inactive', 'No active access');
+    END IF;
+END $$;

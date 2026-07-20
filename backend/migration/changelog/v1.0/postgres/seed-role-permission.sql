@@ -9,6 +9,7 @@ DECLARE
     view_dashboard_permission_id INT;
     edit_dashboard_permission_id INT;
     manage_users_permission_id INT;
+    existing_role_permission_id INT;
 BEGIN
     SELECT id INTO admin_role_id
     FROM ms_role
@@ -29,11 +30,43 @@ BEGIN
     FROM ms_permission
     WHERE name = 'manage_users';
 
-    INSERT INTO ms_role_permission (role_id, permission_id)
-    VALUES
-        (admin_role_id, view_dashboard_permission_id),
-        (admin_role_id, edit_dashboard_permission_id),
-        (admin_role_id, manage_users_permission_id),
-        (analyst_role_id, view_dashboard_permission_id);
-END $$;
+    SELECT id INTO existing_role_permission_id
+    FROM ms_role_permission
+    WHERE role_id = admin_role_id
+      AND permission_id = view_dashboard_permission_id;
 
+    IF existing_role_permission_id IS NULL THEN
+        INSERT INTO ms_role_permission (role_id, permission_id)
+        VALUES (admin_role_id, view_dashboard_permission_id);
+    END IF;
+
+    SELECT id INTO existing_role_permission_id
+    FROM ms_role_permission
+    WHERE role_id = admin_role_id
+      AND permission_id = edit_dashboard_permission_id;
+
+    IF existing_role_permission_id IS NULL THEN
+        INSERT INTO ms_role_permission (role_id, permission_id)
+        VALUES (admin_role_id, edit_dashboard_permission_id);
+    END IF;
+
+    SELECT id INTO existing_role_permission_id
+    FROM ms_role_permission
+    WHERE role_id = admin_role_id
+      AND permission_id = manage_users_permission_id;
+
+    IF existing_role_permission_id IS NULL THEN
+        INSERT INTO ms_role_permission (role_id, permission_id)
+        VALUES (admin_role_id, manage_users_permission_id);
+    END IF;
+
+    SELECT id INTO existing_role_permission_id
+    FROM ms_role_permission
+    WHERE role_id = analyst_role_id
+      AND permission_id = view_dashboard_permission_id;
+
+    IF existing_role_permission_id IS NULL THEN
+        INSERT INTO ms_role_permission (role_id, permission_id)
+        VALUES (analyst_role_id, view_dashboard_permission_id);
+    END IF;
+END $$;
