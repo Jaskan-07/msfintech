@@ -3,6 +3,7 @@ Role Model
 """
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.orm import relationship
 
 from app.db.base import Base
 
@@ -14,3 +15,6 @@ class Role(Base):
     name = Column(String(50), unique=True, nullable=False, index=True)
     description = Column(String(255))
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    users = relationship("User", back_populates="role")
+

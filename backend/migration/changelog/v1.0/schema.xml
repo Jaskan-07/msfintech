@@ -23,6 +23,9 @@
             <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
 
         <rollback>
@@ -64,7 +67,7 @@
 
         <createIndex tableName="ms_user" indexName="idx_ms_user_username">
             <column name="username"/>
-        </createIndex>
+        </createIndex>  
 
         <createIndex tableName="ms_user" indexName="idx_ms_user_email">
             <column name="email"/>
@@ -74,12 +77,8 @@
             <dropTable tableName="ms_user"/>
         </rollback>
     </changeSet>
-
-    <!-- ================================================================== -->
-    <!-- PERMISSIONS TABLE                                                  -->
-    <!-- ================================================================== -->
+    
     <changeSet id="003-ms_permission" author="economic-dashboard">
-        <comment>Create ms_permission table for authorization</comment>
 
         <createTable tableName="ms_permission">
             <column name="id" type="SERIAL">
@@ -88,13 +87,13 @@
             <column name="name" type="VARCHAR(50)">
                 <constraints nullable="false" unique="true"/>
             </column>
-            <column name="description" type="VARCHAR(255)"/>
+            <column name="description" type="VARCHAR(255)"/>     
             <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
             <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
-            </column>
+            </column>    
         </createTable>
 
         <rollback>
@@ -102,11 +101,7 @@
         </rollback>
     </changeSet>
 
-    <!-- ================================================================== -->
-    <!-- ROLE PERMISSION TABLE                                              -->
-    <!-- ================================================================== -->
     <changeSet id="004-ms_role_permission" author="economic-dashboard">
-        <comment>Create ms_role_permission table for role-based permissions</comment>
 
         <createTable tableName="ms_role_permission">
             <column name="id" type="SERIAL">
@@ -119,6 +114,9 @@
                 <constraints nullable="false"/>
             </column>
             <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
         </createTable>

@@ -5,30 +5,28 @@ DO $$
 DECLARE
     existing_permission_id INT;
 BEGIN
-    SELECT id INTO existing_permission_id
-    FROM ms_permission
-    WHERE name = 'view_dashboard';
-
+    -- 1. Seed view_dashboard
+    SELECT id INTO existing_permission_id FROM ms_permission WHERE id = 1;
     IF existing_permission_id IS NULL THEN
-        INSERT INTO ms_permission (name, description)
-        VALUES ('view_dashboard', 'Permission to view the dashboard');
+        INSERT INTO ms_permission (id, name, description)
+        VALUES (1, 'view_dashboard', 'Permission to view the dashboard');
     END IF;
 
-    SELECT id INTO existing_permission_id
-    FROM ms_permission
-    WHERE name = 'edit_dashboard';
-
+    -- 2. Seed edit_dashboard
+    SELECT id INTO existing_permission_id FROM ms_permission WHERE id = 2;
     IF existing_permission_id IS NULL THEN
-        INSERT INTO ms_permission (name, description)
-        VALUES ('edit_dashboard', 'Permission to edit the dashboard');
+        INSERT INTO ms_permission (id, name, description)
+        VALUES (2, 'edit_dashboard', 'Permission to edit the dashboard');
     END IF;
 
-    SELECT id INTO existing_permission_id
-    FROM ms_permission
-    WHERE name = 'manage_users';
-
+    -- 3. Seed manage_users
+    SELECT id INTO existing_permission_id FROM ms_permission WHERE id = 3;
     IF existing_permission_id IS NULL THEN
-        INSERT INTO ms_permission (name, description)
-        VALUES ('manage_users', 'Permission to manage users');
+        INSERT INTO ms_permission (id, name, description)
+        VALUES (3, 'manage_users', 'Permission to manage users');
     END IF;
+
+    -- CRITICAL: Reset the sequence within the block so future dynamic inserts do not crash
+    PERFORM setval(pg_get_serial_sequence('ms_permission', 'id'), COALESCE(MAX(id), 1)) FROM ms_permission;
+
 END $$;

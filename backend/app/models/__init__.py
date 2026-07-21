@@ -1,4 +1,5 @@
-from app.models.rbac import Permission, Role, role_permissions
+from app.models.role import Role
 from app.models.user import User
 
-__all__ = ["Permission", "Role", "User", "role_permissions"]
+__all__ = ["Role", "User"]
+

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.api.v1.endpoints.auth import get_current_user
 from app.db.session import get_db
-from app.models.rbac import Role
+from app.models.role import Role
 from app.models.user import User
 from app.schemas.auth import UserCreate, UserResponse, UserUpdate
 
@@ -14,9 +14,7 @@ router = APIRouter()
 
 
 def _query_users(db: Session):
-    return db.query(User).options(
-        selectinload(User.role).selectinload(Role.permissions)
-    )
+    return db.query(User).options(selectinload(User.role))
 
 
 def _get_user_or_404(user_id: int, db: Session) -> User:
@@ -60,7 +58,7 @@ def _validate_unique_user_fields(
 def _validate_role(db: Session, role_id: int | None) -> None:
     if role_id is None:
         return
-    role = db.query(Role).filter(Role.role_id == role_id).first()
+    role = db.query(Role).filter(Role.id == role_id).first()
     if role is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -94,19 +92,20 @@ def create_user(
     _validate_unique_user_fields(db, user_data.username, user_data.email)
     _validate_role(db, user_data.role_id)
 
-    viewer_role = db.query(Role).filter(Role.role_name == "Viewer").first()
+    analyst_role = db.query(Role).filter(Role.name == "analyst").first()
     db_user = User(
         username=user_data.username,
         email=user_data.email,
         full_name=user_data.full_name,
         hashed_password=user_data.password,
-        role_id=user_data.role_id if user_data.role_id is not None else viewer_role.role_id if viewer_role else None,
+        role_id=user_data.role_id if user_data.role_id is not None else analyst_role.id if analyst_role else 1,
     )
 
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     return _get_user_or_404(db_user.id, db)
+
 
 
 @router.put("/{user_id}", response_model=UserResponse)

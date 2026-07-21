@@ -1,12 +1,13 @@
-from app.schemas.auth import Token, TokenData, UserCreate, UserLogin, UserResponse
-from app.schemas.rbac import PermissionResponse, RoleResponse
+from app.schemas.auth import UserCreate, UserLogin, UserResponse, UserUpdate
+from app.schemas.role import RoleCreate, RoleResponse, RoleUpdate
 
 __all__ = [
-    "PermissionResponse",
+    "RoleCreate",
     "RoleResponse",
-    "Token",
-    "TokenData",
+    "RoleUpdate",
     "UserCreate",
     "UserLogin",
     "UserResponse",
+    "UserUpdate",
 ]
+

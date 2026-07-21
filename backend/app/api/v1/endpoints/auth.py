@@ -8,47 +8,19 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.security import create_access_token
 from app.db.session import get_db
-from app.models.rbac import Role
+from app.models.role import Role
 from app.models.user import User
 from app.schemas.auth import UserLogin, UserCreate, UserUpdate, UserResponse
-from app.models.role import Role
 
 security = HTTPBasic()
 router = APIRouter()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
-
-
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
-    """
-    Resolve the current active user from a bearer token.
-    """
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        username = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-    except JWTError as exc:
-        raise credentials_exception from exc
-
-    user = db.query(User).filter(User.username == username).first()
-    if user is None:
-        raise credentials_exception
-    if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User account is disabled")
-    return user
 
 
 def verify_basic_auth(
     credentials: HTTPBasicCredentials = Depends(security),
     db: Session = Depends(get_db)
-):
+) -> User:
     user = db.query(User).filter(User.username == credentials.username).first()
 
     if not user or credentials.password != user.hashed_password:
@@ -66,6 +38,13 @@ def verify_basic_auth(
         )
 
     return user
+
+
+def get_current_user(current_user: User = Depends(verify_basic_auth)) -> User:
+    """
+    Resolve the current active user from basic auth.
+    """
+    return current_user
 
 
 @router.post("/login", response_model=UserResponse)
@@ -115,9 +94,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
     
-    viewer_role = db.query(Role).filter(Role.role_name == "Viewer").first()
-
-    # Create new user (plain text password - encryption to be added later)
+    # Create new user
     db_user = User(
         username=user_data.username,
         email=user_data.email,
@@ -190,3 +167,4 @@ def get_current_user_info(current_user: User = Depends(get_current_user)):
     Get current authenticated user info.
     """
     return current_user
+
