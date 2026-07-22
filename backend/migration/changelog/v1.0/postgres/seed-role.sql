@@ -26,6 +26,5 @@ BEGIN
     END IF;
 
    
-    PERFORM setval(pg_get_serial_sequence('ms_role', 'id'), COALESCE(MAX(id), 1)) FROM ms_role;
 
 END $$;

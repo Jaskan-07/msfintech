@@ -26,7 +26,6 @@ BEGIN
         VALUES (3, 'manage_users', 'Permission to manage users');
     END IF;
 
-    -- CRITICAL: Reset the sequence within the block so future dynamic inserts do not crash
-    PERFORM setval(pg_get_serial_sequence('ms_permission', 'id'), COALESCE(MAX(id), 1)) FROM ms_permission;
+
 
 END $$;
