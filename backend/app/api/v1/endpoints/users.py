@@ -1,4 +1,5 @@
 from typing import List
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import or_
@@ -17,8 +18,8 @@ def _query_users(db: Session):
     return db.query(User).options(selectinload(User.role))
 
 
-def _get_user_or_404(user_id: int, db: Session) -> User:
-    user = _query_users(db).filter(User.id == user_id).first()
+def _get_user_or_404(user_id: UUID, db: Session) -> User:
+    user = _query_users(db).filter(User.id == str(user_id)).first()
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -31,7 +32,7 @@ def _validate_unique_user_fields(
     db: Session,
     username: str | None = None,
     email: str | None = None,
-    user_id: int | None = None,
+    user_id: UUID | None = None,
 ) -> None:
     filters = []
     if username is not None:
@@ -43,7 +44,7 @@ def _validate_unique_user_fields(
 
     query = db.query(User).filter(or_(*filters))
     if user_id is not None:
-        query = query.filter(User.id != user_id)
+        query = query.filter(User.id != str(user_id))
 
     existing_user = query.first()
     if existing_user is None:
@@ -55,10 +56,10 @@ def _validate_unique_user_fields(
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
 
 
-def _validate_role(db: Session, role_id: int | None) -> None:
+def _validate_role(db: Session, role_id: UUID | None) -> None:
     if role_id is None:
         return
-    role = db.query(Role).filter(Role.id == role_id).first()
+    role = db.query(Role).filter(Role.id == str(role_id)).first()
     if role is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -76,7 +77,7 @@ def list_users(
 
 @router.get("/{user_id}", response_model=UserResponse)
 def get_user(
-    user_id: int,
+    user_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -93,12 +94,18 @@ def create_user(
     _validate_role(db, user_data.role_id)
 
     analyst_role = db.query(Role).filter(Role.name == "analyst").first()
+    if user_data.role_id is None and analyst_role is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Default analyst role not found",
+        )
+
     db_user = User(
         username=user_data.username,
         email=user_data.email,
         full_name=user_data.full_name,
         hashed_password=user_data.password,
-        role_id=user_data.role_id if user_data.role_id is not None else analyst_role.id if analyst_role else 1,
+        role_id=str(user_data.role_id) if user_data.role_id is not None else analyst_role.id,
     )
 
     db.add(db_user)
@@ -110,7 +117,7 @@ def create_user(
 
 @router.put("/{user_id}", response_model=UserResponse)
 def update_user(
-    user_id: int,
+    user_id: UUID,
     user_data: UserUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -140,7 +147,7 @@ def update_user(
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(
-    user_id: int,
+    user_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):

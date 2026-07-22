@@ -2,6 +2,7 @@
 Authentication Endpoint
 """
 from datetime import datetime
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -90,7 +91,11 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
-    role = db.query(Role).filter(Role.id == user_data.role_id).first()
+    role = (
+        db.query(Role).filter(Role.id == str(user_data.role_id)).first()
+        if user_data.role_id is not None
+        else db.query(Role).filter(Role.name == "analyst").first()
+    )
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
     
@@ -100,7 +105,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
         email=user_data.email,
         full_name=user_data.full_name,
         hashed_password=user_data.password,
-        role_id=user_data.role_id,
+        role_id=role.id,
     )
     
     db.add(db_user)
@@ -112,12 +117,12 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
 
 @router.put("/users/{user_id}", response_model=UserResponse)
 def update_user(
-    user_id: int,
+    user_id: UUID,
     user_data: UserUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(verify_basic_auth)
 ):
-    db_user = db.query(User).filter(User.id == user_id).first()
+    db_user = db.query(User).filter(User.id == str(user_id)).first()
 
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -138,11 +143,11 @@ def update_user(
 
 @router.delete("/users/{user_id}", response_model=UserResponse)
 def delete_user(
-    user_id: int,
+    user_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(verify_basic_auth)
 ):
-    db_user = db.query(User).filter(User.id == user_id).first()
+    db_user = db.query(User).filter(User.id == str(user_id)).first()
 
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")

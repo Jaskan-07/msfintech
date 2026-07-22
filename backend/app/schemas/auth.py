@@ -4,6 +4,8 @@ Authentication Schemas
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
+from uuid import UUID
+
 from app.schemas.role import RoleResponse
 
 
@@ -15,7 +17,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
-    role_id: int
+    role_id: Optional[UUID] = None
 
 
 class UserUpdate(BaseModel):
@@ -29,8 +31,8 @@ class UserLogin(BaseModel):
 
 
 class UserResponse(UserBase):
-    id: int
-    role_id: Optional[int] = None
+    id: UUID
+    role_id: Optional[UUID] = None
     is_active: bool
     role: Optional[RoleResponse] = None
     created_at: datetime

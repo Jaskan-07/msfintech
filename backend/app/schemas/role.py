@@ -3,6 +3,8 @@ Role Schemas
 """
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
+
 from pydantic import BaseModel
 
 
@@ -17,7 +19,7 @@ class RoleUpdate(BaseModel):
 
 
 class RoleResponse(RoleCreate):
-    id: int
+    id: UUID
     created_at: datetime
 
     class Config:

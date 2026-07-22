@@ -2,7 +2,7 @@ import axios from 'axios'
 import { API_BASE_URL } from '../../config/api'
 
 interface UserResponse {
-  id: number
+  id: string
   username: string
   email: string
   full_name?: string

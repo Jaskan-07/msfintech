@@ -3,13 +3,13 @@
 --changeset economic-dashboard:007-seed-role-permission splitStatements:false
 DO $$
 DECLARE
-    admin_role_id INT;
-    analyst_role_id INT;
+    admin_role_id VARCHAR(36);
+    analyst_role_id VARCHAR(36);
 
-    view_dashboard_permission_id INT;
-    edit_dashboard_permission_id INT;
-    manage_users_permission_id INT;
-    existing_role_permission_id INT;
+    view_dashboard_permission_id VARCHAR(36);
+    edit_dashboard_permission_id VARCHAR(36);
+    manage_users_permission_id VARCHAR(36);
+    existing_role_permission_id VARCHAR(36);
 BEGIN
     SELECT id INTO admin_role_id
     FROM ms_role
@@ -36,8 +36,8 @@ BEGIN
       AND permission_id = view_dashboard_permission_id;
 
     IF existing_role_permission_id IS NULL THEN
-        INSERT INTO ms_role_permission (role_id, permission_id)
-        VALUES (admin_role_id, view_dashboard_permission_id);
+        INSERT INTO ms_role_permission (id, role_id, permission_id)
+        VALUES (gen_random_uuid()::varchar(36), admin_role_id, view_dashboard_permission_id);
     END IF;
 
     SELECT id INTO existing_role_permission_id
@@ -46,8 +46,8 @@ BEGIN
       AND permission_id = edit_dashboard_permission_id;
 
     IF existing_role_permission_id IS NULL THEN
-        INSERT INTO ms_role_permission (role_id, permission_id)
-        VALUES (admin_role_id, edit_dashboard_permission_id);
+        INSERT INTO ms_role_permission (id, role_id, permission_id)
+        VALUES (gen_random_uuid()::varchar(36), admin_role_id, edit_dashboard_permission_id);
     END IF;
 
     SELECT id INTO existing_role_permission_id
@@ -56,8 +56,8 @@ BEGIN
       AND permission_id = manage_users_permission_id;
 
     IF existing_role_permission_id IS NULL THEN
-        INSERT INTO ms_role_permission (role_id, permission_id)
-        VALUES (admin_role_id, manage_users_permission_id);
+        INSERT INTO ms_role_permission (id, role_id, permission_id)
+        VALUES (gen_random_uuid()::varchar(36), admin_role_id, manage_users_permission_id);
     END IF;
 
     SELECT id INTO existing_role_permission_id
@@ -66,7 +66,7 @@ BEGIN
       AND permission_id = view_dashboard_permission_id;
 
     IF existing_role_permission_id IS NULL THEN
-        INSERT INTO ms_role_permission (role_id, permission_id)
-        VALUES (analyst_role_id, view_dashboard_permission_id);
+        INSERT INTO ms_role_permission (id, role_id, permission_id)
+        VALUES (gen_random_uuid()::varchar(36), analyst_role_id, view_dashboard_permission_id);
     END IF;
 END $$;

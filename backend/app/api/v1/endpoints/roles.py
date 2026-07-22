@@ -1,6 +1,8 @@
 """
 Role Endpoints
 """
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -40,8 +42,8 @@ def get_roles(db: Session = Depends(get_db)):
 
 
 @router.get("/{role_id}", response_model=RoleResponse)
-def get_role(role_id: int, db: Session = Depends(get_db)):
-    role = db.query(Role).filter(Role.id == role_id).first()
+def get_role(role_id: UUID, db: Session = Depends(get_db)):
+    role = db.query(Role).filter(Role.id == str(role_id)).first()
 
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
@@ -51,11 +53,11 @@ def get_role(role_id: int, db: Session = Depends(get_db)):
 
 @router.put("/{role_id}", response_model=RoleResponse)
 def update_role(
-    role_id: int,
+    role_id: UUID,
     role_data: RoleUpdate,
     db: Session = Depends(get_db)
 ):
-    role = db.query(Role).filter(Role.id == role_id).first()
+    role = db.query(Role).filter(Role.id == str(role_id)).first()
 
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
@@ -63,7 +65,7 @@ def update_role(
     if role_data.name is not None:
         existing_role = db.query(Role).filter(
             Role.name == role_data.name,
-            Role.id != role_id
+            Role.id != str(role_id)
         ).first()
 
         if existing_role:
@@ -84,13 +86,13 @@ def update_role(
 
 
 @router.delete("/{role_id}")
-def delete_role(role_id: int, db: Session = Depends(get_db)):
-    role = db.query(Role).filter(Role.id == role_id).first()
+def delete_role(role_id: UUID, db: Session = Depends(get_db)):
+    role = db.query(Role).filter(Role.id == str(role_id)).first()
 
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
 
-    assigned_user = db.query(User).filter(User.role_id == role_id).first()
+    assigned_user = db.query(User).filter(User.role_id == str(role_id)).first()
 
     if assigned_user:
         raise HTTPException(
