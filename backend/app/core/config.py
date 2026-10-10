@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     """Application settings"""
-    model_config = SettingsConfigDict(env_file=".env", env_prefix="MSFINTECH_")
+    model_config = SettingsConfigDict(env_file=(".env", "../.env"), env_prefix="MSFINTECH_", extra="ignore")
     
     PROJECT_NAME: str = "Economic Indicators Dashboard"
     API_V1_STR: str = "/api/v1"
@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "postgres"
     POSTGRES_DB: str = "economic_indicators"
+
+    # Eulerpool Integration (Pydantic will look for MSFINTECH_EULERPOOL_API_KEY)
+    EULERPOOL_API_KEY: str = "demo"
 
     @property
     def DATABASE_URL(self) -> str:

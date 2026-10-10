@@ -3,7 +3,8 @@ API v1 Router
 """
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, roles, users
+# Added "stocks" here at the end of the import statement
+from app.api.v1.endpoints import auth, roles, users, stocks
 
 api_router = APIRouter()
 
@@ -25,3 +26,9 @@ api_router.include_router(
     tags=["Users"]
 )
 
+# Added your new Live Market Data router mapping block below
+api_router.include_router(
+    stocks.router,
+    prefix="/stocks",
+    tags=["Live Market Data"]
+)
