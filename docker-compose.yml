@@ -9,7 +9,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: economic_indicators
+      POSTGRES_DB:  economic_indicators
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -49,15 +49,14 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: economic-api
-    depends_on:
-      liquibase:
-        condition: service_completed_successfully
+    network_mode: host
     environment:
-      MSFINTECH_POSTGRES_SERVER: db
-      MSFINTECH_POSTGRES_PORT: 5432
+      MSFINTECH_POSTGRES_SERVER: 127.0.0.1
+      MSFINTECH_POSTGRES_PORT: 5433
       MSFINTECH_POSTGRES_USER: postgres
       MSFINTECH_POSTGRES_PASSWORD: postgres
       MSFINTECH_POSTGRES_DB: economic_indicators
+      MSFINTECH_EULERPOOL_API_KEY: ${MSFINTECH_EULERPOOL_API_KEY}
     volumes:
       - ./backend/app:/app/app
     ports:
