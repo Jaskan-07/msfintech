@@ -58,6 +58,8 @@ services:
       MSFINTECH_POSTGRES_USER: postgres
       MSFINTECH_POSTGRES_PASSWORD: postgres
       MSFINTECH_POSTGRES_DB: economic_indicators
+    volumes:
+      - ./backend/app:/app/app
     ports:
       - "8000:8000"
     networks:

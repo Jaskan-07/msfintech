@@ -1,5 +1,6 @@
 import { useAuth } from '../../shared/context/AuthContext'
 import { useNavigate } from 'react-router-dom'
+import { MarketWatchWidget } from './MarketWatchWidget'
 import './Dashboard.css'
 
 function Dashboard() {
@@ -21,11 +22,7 @@ function Dashboard() {
       </header>
 
       <main className="dashboard-content">
-        <div className="welcome-card">
-          <h2>Welcome!</h2>
-          <p>You have successfully logged in.</p>
-          <p>Dashboard features coming soon...</p>
-        </div>
+        <MarketWatchWidget />
       </main>
     </div>
   )
